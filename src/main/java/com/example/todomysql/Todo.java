@@ -1,8 +1,7 @@
 package com.example.todomysql;
 
-import com.example.todomysql.model.TodoStatus;
 import jakarta.persistence.*;
-
+import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,5 +12,16 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column()
+    @Column(nullable = false)
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TodoStatus status;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

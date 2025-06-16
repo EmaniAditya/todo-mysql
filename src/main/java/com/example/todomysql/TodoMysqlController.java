@@ -6,7 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -16,13 +18,16 @@ public class TodoMysqlController {
     private TodoRepository todoRepository;
 
     @GetMapping("/todos")
-    public ResponseEntity<List<Todo>> getAllTodos() {
+    public ResponseEntity<Map<String, Object>> getAllTodos() {
         List<Todo> todos = todoRepository.findAll();
-        return new ResponseEntity<>(todos, HttpStatus.OK);
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "Todos fetched successfully");
+        body.put("data", todos);
+        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
     @PostMapping("/todos")
-    public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
+    public ResponseEntity<Map<String, Object>> createTodo(@RequestBody Todo todo) {
         try {
 
             if (todo.getStatus() == null) {
@@ -32,21 +37,34 @@ public class TodoMysqlController {
             todo.setCreatedAt(LocalDateTime.now());
 
             Todo newTodo = todoRepository.save(todo);
-            return new ResponseEntity<>(newTodo, HttpStatus.CREATED);
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "Todo created successfully");
+            body.put("data", newTodo);
+            return new ResponseEntity<>(body, HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "Failed to create todo");
+            return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("/todos/{id}")
-    public ResponseEntity<Todo> getTodoById(@PathVariable("id") long id) {
+    public ResponseEntity<?> getTodoById(@PathVariable("id") long id) {
         Optional<Todo> todoData = todoRepository.findById(id);
-        return todoData.map(todo -> new ResponseEntity<>(todo, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        if (todoData.isPresent()) {
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "Todo retrieved successfully");
+            body.put("data", todoData.get());
+            return new ResponseEntity<>(body, HttpStatus.OK);
+        } else {
+            Map<String, String> body = new HashMap<>();
+            body.put("message", "Todo not found");
+            return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+        }
     }
 
     @PutMapping("/todos/{id}")
-    public ResponseEntity<Todo> updateTodo(@PathVariable("id") long id, @RequestBody Todo todo) {
+    public ResponseEntity<?> updateTodo(@PathVariable("id") long id, @RequestBody Todo todo) {
         Optional<Todo> todoData = todoRepository.findById(id);
 
         if (todoData.isPresent()) {
@@ -60,25 +78,35 @@ public class TodoMysqlController {
             if (todo.getStatus() != null) {
                 existingTodo.setStatus(todo.getStatus());
             }
-            return new ResponseEntity<>(todoRepository.save(existingTodo), HttpStatus.OK);
+            Todo savedTodo = todoRepository.save(existingTodo);
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", "Todo updated successfully");
+            body.put("data", savedTodo);
+            return new ResponseEntity<>(body, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            Map<String, String> body = new HashMap<>();
+            body.put("message", "Todo not found");
+            return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
         }
     }
 
     @DeleteMapping("/todos/{id}")
-    public ResponseEntity<HttpStatus> deleteTodo(@PathVariable("id") long id) {
+    public ResponseEntity<?> deleteTodo(@PathVariable("id") long id) {
         try {
             if (todoRepository.existsById(id)) {
                 todoRepository.deleteById(id);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                Map<String, String> body = new HashMap<>();
+                body.put("message", "Todo deleted successfully");
+                return new ResponseEntity<>(body, HttpStatus.OK);
             } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                Map<String, String> body = new HashMap<>();
+                body.put("message", "Todo not found");
+                return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            Map<String, String> body = new HashMap<>();
+            body.put("message", "Failed to delete todo");
+            return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
-
-

@@ -4,6 +4,8 @@ import com.example.todomysql.entity.Todo;
 import com.example.todomysql.entity.TodoStatus;
 import com.example.todomysql.repository.TodoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +19,24 @@ public class TodoService {
 
     private final TodoRepository todoRepository;
 
-    // Retrieve all to-do items
+    // Retrieve all to-do items (legacy method)
     public List<Todo> findAll() {
         return todoRepository.findAll();
+    }
+    
+    // Retrieve all to-do items with pagination and sorting
+    public Page<Todo> findAll(Pageable pageable) {
+        return todoRepository.findAll(pageable);
+    }
+    
+    // Find todos by status with pagination and sorting
+    public Page<Todo> findByStatus(TodoStatus status, Pageable pageable) {
+        return todoRepository.findByStatus(status, pageable);
+    }
+    
+    // Search todos by title with pagination and sorting
+    public Page<Todo> searchByTitle(String title, Pageable pageable) {
+        return todoRepository.findByTitleContainingIgnoreCase(title, pageable);
     }
 
     // Get one to-do by id
